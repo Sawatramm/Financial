@@ -49,34 +49,40 @@ contract RPS {
     }
 
     function _checkWinnerAndPay() private {
-        uint p0Choice = player_choice[players[0]];
-        uint p1Choice = player_choice[players[1]];
-        address payable account0 = payable(players[0]);
-        address payable account1 = payable(players[1]);
+    uint p0Choice = player_choice[players[0]];
+    uint p1Choice = player_choice[players[1]];
+    address payable account0 = payable(players[0]);
+    address payable account1 = payable(players[1]);
 
-        uint tempReward = reward;
+    uint tempReward = reward; // ป้องกัน reentrancy
+    _resetGame();  // รีเซ็ตค่าก่อนจ่ายเงิน
 
-        _resetGame();
+    bool p0win = (
+        (p0Choice == 0 && (p1Choice == 2 || p1Choice == 3)) || 
+        (p0Choice == 1 && (p1Choice == 0 || p1Choice == 4)) ||
+        (p0Choice == 2 && (p1Choice == 1 || p1Choice == 3)) ||
+        (p0Choice == 3 && (p1Choice == 1 || p1Choice == 4)) ||
+        (p0Choice == 4 && (p1Choice == 0 || p1Choice == 2))
+    );  
+     
+    bool p1win = (
+        (p1Choice == 0 && (p0Choice == 2 || p0Choice == 3)) ||
+        (p1Choice == 1 && (p0Choice == 0 || p0Choice == 4)) ||
+        (p1Choice == 2 && (p0Choice == 1 || p0Choice == 3)) ||
+        (p1Choice == 3 && (p0Choice == 1 || p0Choice == 4)) ||
+        (p1Choice == 4 && (p0Choice == 0 || p0Choice == 2))
+    );  
 
-        if ((p0Choice == 0 && (p1Choice == 2 || p1Choice == 3)) ||
-            (p0Choice == 1 && (p1Choice == 0 || p1Choice == 4)) ||
-            (p0Choice == 2 && (p1Choice == 1 || p1Choice == 3)) ||
-            (p0Choice == 3 && (p1Choice == 1 || p1Choice == 4)) ||
-            (p0Choice == 4 && (p1Choice == 0 || p1Choice == 2))) {
-            account0.transfer(tempReward);
-        } 
-        else if ((p1Choice == 0 && (p0Choice == 2 || p0Choice == 3)) ||
-                 (p1Choice == 1 && (p0Choice == 0 || p0Choice == 4)) ||
-                 (p1Choice == 2 && (p0Choice == 1 || p0Choice == 3)) ||
-                 (p1Choice == 3 && (p0Choice == 1 || p0Choice == 4)) ||
-                 (p1Choice == 4 && (p0Choice == 0 || p0Choice == 2))) {
-            account1.transfer(tempReward);
-        } 
-        else {
-            account0.transfer(tempReward / 2);
-            account1.transfer(tempReward / 2);
-        }
+    if (p0win) {
+        account0.transfer(tempReward);
+    } else if (p1win) {
+        account1.transfer(tempReward);
+    } else {
+        account0.transfer(tempReward / 2);
+        account1.transfer(tempReward / 2);
     }
+}
+
 
     function _resetGame() private {
         numPlayer = 0;
